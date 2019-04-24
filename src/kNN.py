@@ -38,7 +38,8 @@ class kNN:
         label_weight = np.zeros(max_data_y + 2)
 
         for index in k_neighbors_index:
-            label_weight[int(self.data_Y[index])] += self.weight(distances[index])
+            if distances[index] <= self.threshold:
+                label_weight[int(self.data_Y[index])] += self.weight(distances[index])
 
         return np.argmax(label_weight)
 
