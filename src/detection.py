@@ -46,8 +46,8 @@ class Detection:
 
     def export_detection(
         self,
-        input_dir=os.path.dirname(__file__) + "/../data/training",
-        output_dir=os.path.dirname(__file__) + "/../data/training_aligned",
+        input_dir=os.path.dirname(__file__) + "/../data/raw",
+        output_dir=os.path.dirname(__file__) + "/../data/raw_aligned",
         detect_multiple_faces=False
     ):
         print("Starting detect face ...")
