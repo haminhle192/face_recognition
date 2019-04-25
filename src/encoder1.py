@@ -7,6 +7,7 @@ import numpy as np
 import tensorflow as tf
 import math
 import src.facenet as facenet
+import time
 
 
 class Encoder:
@@ -48,13 +49,15 @@ class Encoder:
 
     def generate_embedding(self, face):
         # Get input and output tensors
-        images_placeholder = tf.get_default_graph().get_tensor_by_name("input:0")
-        embeddings = tf.get_default_graph().get_tensor_by_name("embeddings:0")
-        phase_train_placeholder = tf.get_default_graph().get_tensor_by_name("phase_train:0")
+        images_placeholder = self.sess.graph.get_tensor_by_name("input:0")
+        embeddings = self.sess.graph.get_tensor_by_name("embeddings:0")
+        phase_train_placeholder = self.sess.graph.get_tensor_by_name("phase_train:0")
 
         prewhiten_face = facenet.prewhiten(face.image)
 
         # Run forward pass to calculate embeddings
         feed_dict = {images_placeholder: [prewhiten_face], phase_train_placeholder: False}
-        return self.sess.run(embeddings, feed_dict=feed_dict)[0]
-
+        # st = time.time()
+        result = self.sess.run(embeddings, feed_dict=feed_dict)[0]
+        # print("emb time: %s" % str(time.time() - st))
+        return result
