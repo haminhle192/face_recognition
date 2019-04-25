@@ -16,12 +16,14 @@ class KNNClassifier:
             data_dir=os.path.dirname(__file__) + "/../data/training_aligned",
             saved_classifier_dir=os.path.dirname(__file__) + "/../saved_classifiers",
             classifier_filename="knn_classifier.pkl",
-            n_neighbors=5
+            n_neighbors=5,
+            threshold=0.7
     ):
         self.n_neighbors = n_neighbors
         self.data_dir = data_dir
         self.saved_classifier_dir = saved_classifier_dir
         self.classifier_filename = classifier_filename
+        self.threshold = threshold
 
     def load_train_data(self):
         data_set = facenet.get_dataset(self.data_dir)
@@ -42,7 +44,7 @@ class KNNClassifier:
 
                 # Train classifier
                 print('Training classifier')
-                model = kNN.kNN(emb_array, labels, self.n_neighbors)
+                model = kNN.kNN(emb_array, labels, self.n_neighbors, self.threshold)
 
                 # Create a list of class names
                 class_names = [cls.name.replace('_', ' ') for cls in data_set]
