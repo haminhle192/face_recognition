@@ -17,15 +17,25 @@ class Face:
         self.recognition = recognition.Recognition()
 
     @staticmethod
-    def export_detection_for_training_data():
+    def export_detection_for_training_data(
+        input_dir=os.path.dirname(__file__) + "/../data/raw",
+        output_dir=os.path.dirname(__file__) + "/../data/raw_aligned",
+    ):
         print('Starting export detection...')
-        detection.Detection().export_detection()
+        detection.Detection().export_detection(input_dir, output_dir)
         print('Ended export detection.')
 
     @staticmethod
-    def train():
+    def train(
+        data_dir=os.path.dirname(__file__) + "/../data/training_aligned",
+        saved_classifier_dir=os.path.dirname(__file__) + "/../saved_classifiers",
+        classifier_filename="knn_classifier.pkl",
+        n_neighbors=5,
+        threshold=0.7
+    ):
         print("Starting training ...")
-        classifier.KNNClassifier().classifier()
+        model = classifier.KNNClassifier(data_dir, saved_classifier_dir, classifier_filename, n_neighbors, threshold)
+        model.classifier()
         print("Ended training.")
 
     def predict(self, image_path):
