@@ -10,6 +10,9 @@ import numpy as np
 
 import src.encoder1 as encoder
 import src.detection as detection
+import time
+
+import tensorflow as tf
 
 
 class Recognition:
@@ -18,12 +21,15 @@ class Recognition:
             classifier_filename=os.path.dirname(__file__) + "/../saved_classifiers/knn_classifier.pkl",
             debug=False
     ):
-        self.detection = detection.Detection()
-        self.identifier = Identifier(classifier_filename)
-        self.debug = debug
+        with tf.Session() as sess:
+            self.detection = detection.Detection()
+            self.identifier = Identifier(classifier_filename, sess)
+            self.debug = debug
 
     def identify(self, image):
+        # st = time.time()
         faces = self.detection.find_faces(image)
+        # print("dectect time: %s" % str(time.time() - st))
         predicted_faces = []
 
         for i, face in enumerate(faces):
@@ -35,8 +41,8 @@ class Recognition:
 
 
 class Identifier:
-    def __init__(self, classifier_filename):
-        self.encoder = encoder.Encoder()
+    def __init__(self, classifier_filename, sess):
+        self.encoder = encoder.Encoder(sess=sess)
         print("Loading classifier ...")
         if os.path.exists(classifier_filename):
             with open(classifier_filename, 'rb') as infile:
@@ -46,10 +52,14 @@ class Identifier:
             print("Don't have classifier! %s" % classifier_filename)
 
     def identify(self, face):
+        # st = time.time()
         face.embedding = self.encoder.generate_embedding(face)
+        # print("embedding time: %s" % str(time.time() - st))
+        # st = time.time()
         if face.embedding is not None:
             prediction = self.model.predict(np.array([face.embedding]))[0]
             face.name = self.class_names[prediction]
+            # print("recognition time: %s" % str(time.time() - st))
             return face
 
         else:
