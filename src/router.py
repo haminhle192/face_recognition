@@ -55,6 +55,7 @@ def predict():
         user = {'id': id_obj}
         data.append(user)
     duration = "Predict: %s" % str(time.time() - start_time)
+    os.remove(file_predict_path)
     response = generate_response(0, duration, data)
     return response
 
