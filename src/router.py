@@ -39,6 +39,11 @@ def train():
 @app.route('/v1/api/predict', methods=['POST'])
 def predict():
     file_predict = request.files[IMAGE_PREDICT]
+    mime_type = file_predict.content_type
+    if mime_type not in ['image/png', 'image/jpg']:
+        response = generate_response(1001, 'Image have to png or jpg format')
+        return response
+
     file_name = generate_name(secure_filename(file_predict.filename))
     file_predict_path = os.path.join(PREDICTION_DATA_PATH, file_name)
     file_predict.save(file_predict_path)
@@ -109,16 +114,21 @@ def align_face(face_id):
 
     tmp_output_path = os.path.join(DATA_PATH, folder_output_name)
     os.makedirs(tmp_output_path)
-
+    found_file = False
     for key in request.files.keys():
         file_request = request.files[key]
         mime_type = file_request.content_type
         if mime_type not in ['image/png', 'image/jpg']:
             print(mime_type)
             continue
+        found_file = True
         file_name = generate_name(secure_filename(file_request.filename))
         file_path = os.path.join(tmp_input_face_path, file_name)
         file_request.save(file_path)
+
+    if not found_file:
+        response = generate_response(1005, 'Not found image. Plz check your request!')
+        return response
 
     tmp_input_path = os.path.join(DATA_PATH, folder_input_name)
     face.Face.export_detection_for_training_data(input_dir=tmp_input_path, output_dir=tmp_output_path)
