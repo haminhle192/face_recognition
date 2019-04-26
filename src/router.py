@@ -66,7 +66,12 @@ def add_member():
     if os.path.exists(existed_member_path):
         response = generate_response(1002, 'Member is existed. Could not create new member')
         return response
+
     result = align_face(face_id)
+    if result is None:
+        response = generate_response(1005, 'Not found image. Plz check your request!')
+        return response
+
     source_dir = os.path.join(result.get("output_path"), face_id)
     shutil.move(source_dir, DATA_ALIGNED_PATH)
     shutil.rmtree(result.get("input_path"))
@@ -82,7 +87,12 @@ def update_member():
     if not os.path.exists(existed_member_path):
         response = generate_response(1003, 'Member is not existed. Could not update member')
         return response
+
     result = align_face(face_id)
+    if result is None:
+        response = generate_response(1005, 'Not found image. Plz check your request!')
+        return response
+
     source_aligned_path = os.path.join(result.get("output_path"), face_id)
     destination_aligned_path = os.path.join(DATA_ALIGNED_PATH, face_id)
     move_file(source_aligned_path, destination_aligned_path)
@@ -127,8 +137,7 @@ def align_face(face_id):
         file_request.save(file_path)
 
     if not found_file:
-        response = generate_response(1005, 'Not found image. Plz check your request!')
-        return response
+        return None
 
     tmp_input_path = os.path.join(DATA_PATH, folder_input_name)
     face.Face.export_detection_for_training_data(input_dir=tmp_input_path, output_dir=tmp_output_path)
