@@ -181,7 +181,8 @@ if __name__ == '__main__':
     global f
     predictor = face.Face()
     print("Time to load model: %s" % str(time.time() - start_time))
-    with open('../config.json') as json_data_file:
+    # path = ROOT_PATH
+    with open('config.json') as json_data_file:
         cfg = json.load(json_data_file)
     port = int(os.getenv('PORT', cfg["port"]))
     print("Starting app on port %d" % port)
