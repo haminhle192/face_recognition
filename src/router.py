@@ -20,18 +20,25 @@ install_aliases()
 app = Flask(__name__)
 cors = CORS(app)
 
+training = False
 predictor = None
 current_milli_time = lambda: int(round(time.time() * 1000))
 
 
 @app.route('/v1/api/train', endpoint='train', methods=['POST'])
 def train():
+    global training
+    if training is True:
+        response = generate_response(1006, "Bot is training")
+        return response
+    training = True
     start_time = time.time()
     face.Face.train(data_dir=DATA_ALIGNED_PATH)
     global predictor
     predictor = None
     predictor = face.Face()
     duration = "Time to train: %s" % str(time.time() - start_time)
+    training = False
     response = generate_response(0, duration)
     return response
 
