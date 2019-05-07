@@ -104,5 +104,4 @@ venv.bak/
 .mypy_cache/
 
 .idea/
-data/
 saved_classifiers/
