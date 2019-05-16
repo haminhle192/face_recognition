@@ -129,7 +129,7 @@ class Detection:
         faces = []
         count_per_image = []
 
-        for i in xrange(nrof_samples):
+        for i in range(nrof_samples):
             img = misc.imread(os.path.expanduser(image_paths[i]))
             img_size = np.asarray(img.shape)[0:2]
             bounding_boxes, _ = detect_face.detect_face(img, self.minsize, self.pnet, self.rnet, self.onet,
