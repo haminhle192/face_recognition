@@ -30,7 +30,7 @@ class Face:
         data_dir=os.path.dirname(__file__) + "/../data/training_aligned",
         saved_classifier_dir=os.path.dirname(__file__) + "/../saved_classifiers",
         classifier_filename="knn_classifier.pkl",
-        n_neighbors=5,
+        n_neighbors=1,
         threshold=0.7
     ):
         print("Starting training ...")
