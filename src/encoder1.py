@@ -38,7 +38,7 @@ class Encoder:
         nrof_batches_per_epoch = int(math.ceil(1.0 * nrof_images / self.batch_size))
         emb_array = np.zeros((nrof_images, embedding_size))
         for i in range(nrof_batches_per_epoch):
-            # print(i+1, '/', nrof_batches_per_epoch)
+            print(i+1, '/', nrof_batches_per_epoch)
             start_index = i * self.batch_size
             end_index = min((i + 1) * self.batch_size, nrof_images)
             paths_batch = image_paths[start_index:end_index]
@@ -61,3 +61,20 @@ class Encoder:
         result = self.sess.run(embeddings, feed_dict=feed_dict)[0]
         # print("emb time: %s" % str(time.time() - st))
         return result
+
+    def export_embeddings(self, data_dir, embeddings_name, labels_name, label_strings_name):
+        train_set = facenet.get_dataset(data_dir)
+        image_paths, labels = facenet.get_image_paths_and_labels(train_set)
+        # fetch the classes (labels as strings) exactly as it's done in get_dataset
+        path_exp = os.path.expanduser(data_dir)
+        classes = [path for path in os.listdir(path_exp) if os.path.isdir(os.path.join(path_exp, path))]
+        classes.sort()
+        # get the label strings
+        label_strings = [name for name in classes if os.path.isdir(os.path.join(path_exp, name))]
+
+        emb_array = self.generate_embeddings(image_paths)
+        labels = np.array(labels)
+        label_strings = np.array(label_strings)
+        np.save(embeddings_name, emb_array)
+        np.save(labels_name, labels)
+        np.save(label_strings_name, label_strings[labels])
