@@ -1,6 +1,7 @@
 import numpy as np
 import sys
 import tensorflow as tf
+from sklearn.preprocessing import MultiLabelBinarizer
 
 
 class kNN:
@@ -20,33 +21,6 @@ class kNN:
         sess = tf.Session()
         with sess.as_default():
             self.x_train, self.y_train, self.x_test, self.prediction = self._build()
-
-    # point: n x 1
-    def weight(self, distance):
-        sigma = .5
-        return np.exp(-distance ** 2 / sigma)
-
-    # point: n x 1
-    def get_label(self, target):
-        max_data_y = np.max(self.data_Y)
-        distances = self.get_distance(target)
-        # distances = np.append(distances, self.threshold)
-        # self.data_Y.append(max_data_y + 1)
-        indexes = np.argsort(distances)
-
-        k_neighbors_index = indexes[:self.k]
-
-        # label_weight = np.zeros(max_data_y + 2)
-        label_weight = np.zeros(max_data_y + 1)
-        for index in k_neighbors_index:
-            if distances[index] <= self.thresholds[0, self.data_Y[index]]:
-                label_weight[int(self.data_Y[index])] += self.weight(distances[index])
-
-        # print(label_weight)
-        if np.count_nonzero(label_weight) > 0:
-            return np.argmax(label_weight)
-        else:
-            return max_data_y + 1
 
     def _build(self):
         feature_number = len(self.data_train_X[0])
@@ -71,15 +45,23 @@ class kNN:
         weight_by_labels = tf.matmul(tf.expand_dims(top_k_values, 1), top_k_labels_one_hot)
         weight_by_labels = tf.reshape(weight_by_labels, (None, self.nof_class))
 
-        prediction = tf.argmax(weight_by_labels, axis=1)
+        prediction = tf.multiply(
+            tf.greater_equal(weight_by_labels, tf.tile(tf.reduce_max(weight_by_labels, axis=1, keepdims=True), (1, weight_by_labels.shape[1]))),
+            tf.greater(weight_by_labels, tf.tile(tf.reduce_min(weight_by_labels, axis=11, keepdims=True)), (1, weight_by_labels.shape[1]))
+        )
 
         return x_train, y_train, x_test, prediction
 
     def fit(self, sess):
-        return sess.run(self.prediction(), feed_dict={self.x_train: self.data_train_X,
-                                                      self.x_test: self.data_test_X,
-                                                      self.y_train: self.data_train_Y})
+        prediction = sess.run(self.prediction(), feed_dict={self.x_train: self.data_train_X,
+                                                            self.x_test: self.data_test_X,
+                                                            self.y_train: self.data_train_Y})
 
+        mlb = MultiLabelBinarizer()
+        mlb.fit_transform(self.data_train_Y)
+        return mlb.inverse_transform(prediction)
+
+    @staticmethod
     def evaluate(self, data_test_Y, prediction):
         accuracy = 0
         for pred, actual in zip(prediction, data_test_Y):
@@ -101,8 +83,16 @@ class kNN:
 # s = tf.reshape(s, (2, 6))
 # print(s)
 # t = tf.zeros((1, 5))
-# t = tf.reduce_max(t, axis=1)
+# t = tf.random.uniform((3,4), minval=0, maxval=10)
+# t = tf.reduce_max(t, axis=1, keepdims=True)
+# t = tf.tile(t, (1, 4))
 # t = tf.Session().run(t)
 # print(t)
 
 from sklearn import preprocessing
+# mlb = MultiLabelBinarizer()
+# mlb.fit_transform([set([0, 1, 2])])
+# a = np.array([[0, 0, 0], [1, 0, 0]])
+# print(a.shape)
+# s = mlb.inverse_transform(a)
+# print(s)
