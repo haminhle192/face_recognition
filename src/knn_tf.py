@@ -61,12 +61,15 @@ class kNN:
         mlb = MultiLabelBinarizer()
         mlb.fit([set(data_train_Y)])
         test_labels_onehot = mlb.transform(list(zip(data_test_Y)))
-        print(prediction)
-        print(test_labels_onehot)
+        # print(prediction)
+        # print(test_labels_onehot)
         accuracy = np.mean(np.equal(prediction, test_labels_onehot))
+        fp = (prediction - test_labels_onehot) * prediction
+        fp = np.sum(fp, axis=1)
+        fp = fp[fp != 0]
         # fp = (((predictions - test_labels)!=0)*predictions)
         # fp = fp[fp != 0]
         # fp = fp[fp != np.max(test_labels)+1]
         # print(fp)
         print('Accuracy: %.3f' % accuracy)
-        # print('False Positive: %.3f' % (len(fp)/predictions.shape[0]))
+        print('False Positive: %.3f' % (len(fp)/prediction.shape[0]))
