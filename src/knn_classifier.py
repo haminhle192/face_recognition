@@ -8,10 +8,10 @@ import os
 import pickle
 import src.encoder1 as encoder
 import src.kNN as kNN
+import src.knn_tf as kNNTF
 import pandas as pd
 import numpy as np
 import time
-
 
 class KNNClassifier:
     def __init__(
@@ -101,17 +101,10 @@ class KNNClassifier:
         print("============End Calculate thresholds===============", time.time() - st)
         st = time.time()
         print("============Test performance===============")
-        model = kNN.kNN(train_data, train_labels, thresholds, self.n_neighbors)
-        predictions = model.predict(test_data)
-        print(predictions)
-        print(test_labels)
-        accuracy = np.mean(np.equal(predictions, test_labels))
-        fp = (((predictions - test_labels)!=0)*predictions)
-        fp = fp[fp != 0]
-        fp = fp[fp != np.max(test_labels)+1]
-        print(fp)
-        print('Accuracy: %.3f' % accuracy)
-        print('False Positive: %.3f' % (len(fp)/predictions.shape[0]))
+        # model = kNN.kNN(train_data, train_labels, thresholds, self.n_neighbors)
+        model = kNNTF.kNN(train_data, train_labels, thresholds, 2)
+        predictions = model.fit(test_data)
+        kNNTF.kNN.evaluate(train_labels, test_labels, predictions)
         print("============End Test performance===============", time.time() - st)
 
     def cal_thresholds(self, embeddings, labels):
