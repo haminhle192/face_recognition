@@ -12,6 +12,7 @@ import src.knn_tf as kNNTF
 import pandas as pd
 import numpy as np
 import time
+import math
 
 class KNNClassifier:
     def __init__(
@@ -65,6 +66,7 @@ class KNNClassifier:
         df = df.sort_values(by=[512]).groupby([512])
         train_df = pd.DataFrame(np.zeros((0, 513)))
         test_df = pd.DataFrame(np.zeros((0, 513)))
+        i = -1
         for n, values in df:
             print(n)
             # st = time.time()
@@ -72,18 +74,27 @@ class KNNClassifier:
             d = d.sample(frac=1).reset_index(drop=True)
             len = d.shape[0]
             if len >= 20:
-                train_df = train_df.append(d.iloc[0:4], ignore_index=True)
-                test_df = test_df.append(d.iloc[4:len], ignore_index=True)
+                i += 1
+                # print(i)
+                temp_d = pd.DataFrame(d).drop(labels=[512], axis=1)
+                temp_d.insert(512, 512, i)
+                train_df = train_df.append(temp_d.iloc[0:10], ignore_index=True)
+                test_df = test_df.append(temp_d.iloc[10:len], ignore_index=True)
             else:
                 # train_df = train_df.append(d.iloc[0:len//2], ignore_index=True)
                 # test_df = test_df.append(d.iloc[len//2:len], ignore_index=True)
-                test_df = test_df.append(d, ignore_index=True)
+                # print("-1")
+                temp_d = pd.DataFrame(d).drop(labels=[512], axis=1)
+                temp_d.insert(512, 512, -1)
+                test_df = test_df.append(temp_d, ignore_index=True)
             # print(time.time() - st)
 
+        # print(train_df)
+        # print(test_df)
         np.save(out1_file, train_df.values)
         np.save(out2_file, test_df.values)
 
-    def test_performance(self, train_file, test_file):
+    def test_performance(self, train_file, test_file, batch_size=1024):
         st = time.time()
         print("============Loading data===============")
         train_df = pd.DataFrame(np.load(train_file))
@@ -102,8 +113,32 @@ class KNNClassifier:
         st = time.time()
         print("============Test performance===============")
         # model = kNN.kNN(train_data, train_labels, thresholds, self.n_neighbors)
-        model = kNNTF.kNN(train_data, train_labels, thresholds, 2)
-        predictions = model.fit(test_data)
+        model = kNNTF.kNN(train_data, train_labels, thresholds, 1)
+
+        nof_test_data = test_data.shape[0]
+        print("--->nof test data<----", nof_test_data)
+        nof_batch = int(math.ceil(1.0*nof_test_data / batch_size))
+        print("--->nof batch<----", nof_batch)
+        predictions = np.zeros((nof_test_data, np.max(train_labels) + 1))
+        # print(predictions.shape)
+        # split_test_data = np.array_split(test_data, nof_batch)
+        # print(split_test_data)
+        # i = 0
+        # for df in split_test_data:
+        for i in range(nof_batch):
+            start = time.time()
+            print(i)
+            start_index = i * batch_size
+            end_index = min((i + 1) * batch_size, nof_test_data)
+            # print(start_index, end_index)
+            data = test_data[start_index:end_index, :]
+            # print(data.shape)
+            pred = model.fit(data)
+            # print(pred.shape)
+            predictions[start_index:end_index, :] = pred
+            i += 1
+            print("time:", time.time()-start)
+
         kNNTF.kNN.evaluate(train_labels, test_labels, predictions)
         print("============End Test performance===============", time.time() - st)
 
@@ -112,21 +147,22 @@ class KNNClassifier:
         df[512] = labels
         max_label = np.max(labels)
         emb_by_classes = df.groupby(512, as_index=False)
-        threshold_class = self.get_threshold(embeddings, self.default_threshold) - 0.1
-        print("=========>threshold_class", threshold_class)
+        threshold_class = self.get_threshold(embeddings, self.default_threshold, is_max=False) - 0.1
+        # print("=========>threshold_class", threshold_class)
         thresholds = np.zeros((1, max_label + 1))
-        for cls, group in emb_by_classes:
-            # print("========================>", cls)
-            group = group.drop(512, axis=1)
-            if np.shape(group.values)[0] > 1:
-                thresholds[0][cls] = KNNClassifier.get_threshold(group.values, self.default_threshold)
-            else:
-                thresholds[0][cls] = np.min([threshold_class, self.default_threshold])
-        # print(thresholds)
+        # for cls, group in emb_by_classes:
+        #     # print("========================>", cls)
+        #     group = group.drop(512, axis=1)
+        #     if np.shape(group.values)[0] > 1:
+        #         thresholds[0][cls] = KNNClassifier.get_threshold(group.values, self.default_threshold)
+        #     else:
+        #         thresholds[0][cls] = np.min([threshold_class, self.default_threshold])
+        # # print(thresholds)
         return thresholds
 
     @staticmethod
-    def get_threshold(embeddings, default_threshold=0.5):
+    def get_threshold(embeddings, default_threshold=0.5, is_max=True):
+        print(embeddings.shape)
         A = embeddings
         B = embeddings
 
@@ -140,8 +176,17 @@ class KNNClassifier:
         result = np.linalg.norm(result, axis=2)
         result = result.flatten()
         print("++++++++++++++++++++++")
-        print(result)
+        print(result.shape)
+        distances = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(A, tf.expand_dims(B, 1))), axis=2))
+        sess = tf.Session()
+        result2 = sess.run(distances)
+        print("++++++++++++++++++++++")
+        print(result2.shape)
+
         result = result[result != 0]
-        result = np.max(result, axis=0)
+        if is_max:
+            result = np.max(result, axis=0)
+        else:
+            result = np.min(result, axis=0)
         result = np.min(np.array([result, default_threshold]))
         return result
