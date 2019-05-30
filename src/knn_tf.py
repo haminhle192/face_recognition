@@ -14,9 +14,7 @@ class kNN:
         self.thresholds = thresholds
         self.nof_class = np.max(data_train_Y) + 1
 
-        self.sess = tf.Session()
-        with self.sess.as_default():
-            self.x_train, self.y_train, self.x_test, self.prediction = self._build()
+        self.x_train, self.y_train, self.x_test, self.prediction = self._build()
 
     def _build(self):
         feature_number = len(self.data_train_X[0])
@@ -51,10 +49,11 @@ class kNN:
         return x_train, y_train, x_test, prediction
 
     def fit(self, data_test_X):
-        prediction = self.sess.run(self.prediction, feed_dict={self.x_train: self.data_train_X,
-                                                               self.x_test: data_test_X,
-                                                               self.y_train: self.data_train_Y})
-        return prediction
+        with tf.Session() as sess:
+            prediction = sess.run(self.prediction, feed_dict={self.x_train: self.data_train_X,
+                                                              self.x_test: data_test_X,
+                                                              self.y_train: self.data_train_Y})
+            return prediction
 
     @staticmethod
     def evaluate(data_train_Y, data_test_Y, prediction):

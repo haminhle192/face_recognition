@@ -108,7 +108,7 @@ class KNNClassifier:
         print("============Calculate thresholds===============")
         thresholds = self.cal_thresholds(train_data, train_labels)
         # thresholds = np.zeros_like(thresholds) + 0.7
-        print(thresholds)
+        # print(thresholds)
         print("============End Calculate thresholds===============", time.time() - st)
         st = time.time()
         print("============Test performance===============")
@@ -121,10 +121,7 @@ class KNNClassifier:
         print("--->nof batch<----", nof_batch)
         predictions = np.zeros((nof_test_data, np.max(train_labels) + 1))
         # print(predictions.shape)
-        # split_test_data = np.array_split(test_data, nof_batch)
-        # print(split_test_data)
-        # i = 0
-        # for df in split_test_data:
+
         for i in range(nof_batch):
             start = time.time()
             print(i)
@@ -136,8 +133,7 @@ class KNNClassifier:
             pred = model.fit(data)
             # print(pred.shape)
             predictions[start_index:end_index, :] = pred
-            i += 1
-            print("time:", time.time()-start)
+            print("--->time by batch<----", time.time()-start)
 
         kNNTF.kNN.evaluate(train_labels, test_labels, predictions)
         print("============End Test performance===============", time.time() - st)
@@ -150,43 +146,42 @@ class KNNClassifier:
         threshold_class = self.get_threshold(embeddings, self.default_threshold, is_max=False) - 0.1
         # print("=========>threshold_class", threshold_class)
         thresholds = np.zeros((1, max_label + 1))
-        # for cls, group in emb_by_classes:
-        #     # print("========================>", cls)
-        #     group = group.drop(512, axis=1)
-        #     if np.shape(group.values)[0] > 1:
-        #         thresholds[0][cls] = KNNClassifier.get_threshold(group.values, self.default_threshold)
-        #     else:
-        #         thresholds[0][cls] = np.min([threshold_class, self.default_threshold])
-        # # print(thresholds)
+        for cls, group in emb_by_classes:
+            # print("========================>", cls)
+            group = group.drop(512, axis=1)
+            if np.shape(group.values)[0] > 1:
+                thresholds[0][cls] = KNNClassifier.get_threshold(group.values, self.default_threshold)
+            else:
+                thresholds[0][cls] = np.min([threshold_class, self.default_threshold])
+        # print(thresholds)
         return thresholds
 
     @staticmethod
-    def get_threshold(embeddings, default_threshold=0.5, is_max=True):
-        print(embeddings.shape)
+    def get_threshold(embeddings, default_threshold=0.5, batch_size=1024, is_max=True):
         A = embeddings
         B = embeddings
+        nof_emb = embeddings.shape[0]
+        nof_batch = int(math.ceil(1.0 * nof_emb / batch_size))
+        result = np.zeros((nof_emb, nof_emb))
+        with tf.Session() as sess:
+            for i in range(nof_batch):
+                # start = time.time()
+                # print(i)
+                start_index = i * batch_size
+                end_index = min((i + 1) * batch_size, nof_emb)
+                b = B[start_index:end_index, :]
+                distance_tf = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(A, tf.expand_dims(b, 1))), axis=2))
+                distances = sess.run(distance_tf)
+                result[start_index:end_index, :] = distances
+                # print("time:", time.time() - start)
 
-        n_point = A.shape[0]
+            # result1 = sess.run(tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(A, tf.expand_dims(B, 1))), axis=2)))
+            # print(result == result1)
 
-        A = np.repeat(A[np.newaxis, :, :], n_point, axis=0)
-        B = np.repeat(B[:, np.newaxis, :], n_point, axis=1)
-
-        result = A - B
-
-        result = np.linalg.norm(result, axis=2)
-        result = result.flatten()
-        print("++++++++++++++++++++++")
-        print(result.shape)
-        distances = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(A, tf.expand_dims(B, 1))), axis=2))
-        sess = tf.Session()
-        result2 = sess.run(distances)
-        print("++++++++++++++++++++++")
-        print(result2.shape)
-
-        result = result[result != 0]
-        if is_max:
-            result = np.max(result, axis=0)
-        else:
-            result = np.min(result, axis=0)
-        result = np.min(np.array([result, default_threshold]))
-        return result
+            result = result[result != 0]
+            if is_max:
+                result = np.max(result, axis=0)
+            else:
+                result = np.min(result, axis=0)
+            result = np.min(np.array([result, default_threshold]))
+            return result
