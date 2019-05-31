@@ -1,18 +1,22 @@
 import numpy as np
 import tensorflow as tf
 from sklearn.preprocessing import MultiLabelBinarizer
+import math
+import sys
 
 class kNN:
     def __init__(self,
                  data_train_X,
                  data_train_Y,
                  thresholds,
+                 sess,
                  k=1):
         self.data_train_X = data_train_X
         self.data_train_Y = data_train_Y
         self.k = k
         self.thresholds = thresholds
         self.nof_class = np.max(data_train_Y) + 1
+        self.sess = sess
 
         self.x_train, self.y_train, self.x_test, self.prediction = self._build()
 
@@ -49,26 +53,37 @@ class kNN:
         return x_train, y_train, x_test, prediction
 
     def fit(self, data_test_X):
-        with tf.Session() as sess:
-            prediction = sess.run(self.prediction, feed_dict={self.x_train: self.data_train_X,
-                                                              self.x_test: data_test_X,
-                                                              self.y_train: self.data_train_Y})
-            return prediction
+        prediction = self.sess.run(self.prediction, feed_dict={self.x_train: self.data_train_X,
+                                                          self.x_test: data_test_X,
+                                                          self.y_train: self.data_train_Y})
+        return prediction
 
     @staticmethod
-    def evaluate(data_train_Y, data_test_Y, prediction):
+    def evaluate(data_train_Y, data_test_Y, prediction, batch_size=64):
         mlb = MultiLabelBinarizer()
         mlb.fit([set(data_train_Y)])
         test_labels_onehot = mlb.transform(list(zip(data_test_Y)))
         # print(prediction)
         # print(test_labels_onehot)
         accuracy = np.mean(np.equal(prediction, test_labels_onehot))
-        fp = (prediction - test_labels_onehot) * prediction
-        fp = np.sum(fp, axis=1)
-        fp = fp[fp != 0]
+        print('Accuracy: %.3f' % accuracy)
+
+        nof_data = prediction.shape[0]
+        nof_batch = int(math.ceil(1.0 * nof_data / batch_size))
+        len_fp = 0
+        print(prediction.shape)
+        for i in range(nof_batch):
+            sys.stdout.write("\r  --->progress<---- {}/{}".format(i, nof_batch))
+            start_index = i * batch_size
+            end_index = min((i + 1) * batch_size, nof_data)
+            labels = test_labels_onehot[start_index:end_index, :]
+            pre = prediction[start_index: end_index, :]
+            fp = (pre - labels) * pre
+            fp = np.sum(fp, axis=1)
+            fp = fp[fp != 0]
+            len_fp += len(fp)
         # fp = (((predictions - test_labels)!=0)*predictions)
         # fp = fp[fp != 0]
         # fp = fp[fp != np.max(test_labels)+1]
         # print(fp)
-        print('Accuracy: %.3f' % accuracy)
-        print('False Positive: %.3f' % (len(fp)/prediction.shape[0]))
+        print('False Positive: %.3f' % (len_fp/nof_data))

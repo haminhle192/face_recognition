@@ -13,6 +13,7 @@ import pandas as pd
 import numpy as np
 import time
 import math
+import sys
 
 class KNNClassifier:
     def __init__(
@@ -94,7 +95,7 @@ class KNNClassifier:
         np.save(out1_file, train_df.values)
         np.save(out2_file, test_df.values)
 
-    def test_performance(self, train_file, test_file, batch_size=1024):
+    def test_performance(self, train_file, test_file, batch_size=32):
         st = time.time()
         print("============Loading data===============")
         train_df = pd.DataFrame(np.load(train_file))
@@ -106,36 +107,41 @@ class KNNClassifier:
         print("============End Loading data===============", time.time() - st)
         st = time.time()
         print("============Calculate thresholds===============")
-        thresholds = self.cal_thresholds(train_data, train_labels)
+        # thresholds = self.cal_thresholds(train_data, train_labels)
+        # np.save("E:\Data\CASIA_thresholds.npy", thresholds)
+        thresholds = np.load("E:\Data\CASIA_thresholds.npy")
         # thresholds = np.zeros_like(thresholds) + 0.7
         # print(thresholds)
         print("============End Calculate thresholds===============", time.time() - st)
         st = time.time()
         print("============Test performance===============")
         # model = kNN.kNN(train_data, train_labels, thresholds, self.n_neighbors)
-        model = kNNTF.kNN(train_data, train_labels, thresholds, 1)
+        with tf.Session() as sess:
+            model = kNNTF.kNN(train_data, train_labels, thresholds, sess, k=1)
 
-        nof_test_data = test_data.shape[0]
-        print("--->nof test data<----", nof_test_data)
-        nof_batch = int(math.ceil(1.0*nof_test_data / batch_size))
-        print("--->nof batch<----", nof_batch)
-        predictions = np.zeros((nof_test_data, np.max(train_labels) + 1))
-        # print(predictions.shape)
+            nof_test_data = test_data.shape[0]
+            print("--->nof test data<----", nof_test_data)
+            nof_batch = int(math.ceil(1.0*nof_test_data / batch_size))
+            predictions = np.zeros((nof_test_data, np.max(train_labels) + 1))
+            # print(predictions.shape)
 
-        for i in range(nof_batch):
-            start = time.time()
-            print(i)
-            start_index = i * batch_size
-            end_index = min((i + 1) * batch_size, nof_test_data)
-            # print(start_index, end_index)
-            data = test_data[start_index:end_index, :]
-            # print(data.shape)
-            pred = model.fit(data)
-            # print(pred.shape)
-            predictions[start_index:end_index, :] = pred
-            print("--->time by batch<----", time.time()-start)
+            for i in range(nof_batch):
+                start = time.time()
+                sys.stdout.write("\r --->progress<---- {}/{}".format(i, nof_batch))
+                start_index = i * batch_size
+                end_index = min((i + 1) * batch_size, nof_test_data)
+                # print(start_index, end_index)
+                data = test_data[start_index:end_index, :]
+                # print(data.shape)
+                pred = model.fit(data)
+                # print(pred.shape)
+                predictions[start_index:end_index, :] = pred
+                # sys.stdout.write("\r --->time by batch<---- {} {}".format(i, time.time()-start))
 
+        np.save("E:\Data\CASIA_predictions.npy", predictions)
+        print("------------->Evaluating<-------------")
         kNNTF.kNN.evaluate(train_labels, test_labels, predictions)
+        print("------------->End Evaluating<-------------")
         print("============End Test performance===============", time.time() - st)
 
     def cal_thresholds(self, embeddings, labels):
@@ -143,45 +149,58 @@ class KNNClassifier:
         df[512] = labels
         max_label = np.max(labels)
         emb_by_classes = df.groupby(512, as_index=False)
+        st = time.time()
+        print("----->Start calculate threshold cover all data<-----")
         threshold_class = self.get_threshold(embeddings, self.default_threshold, is_max=False) - 0.1
+        print("----->End calculate threshold cover all data<-----", time.time() - st)
         # print("=========>threshold_class", threshold_class)
+        st = time.time()
+        print("----->Start calculate threshold for each class<-----")
         thresholds = np.zeros((1, max_label + 1))
         for cls, group in emb_by_classes:
-            # print("========================>", cls)
+            sys.stdout.write("\r class {}".format(cls))
             group = group.drop(512, axis=1)
             if np.shape(group.values)[0] > 1:
-                thresholds[0][cls] = KNNClassifier.get_threshold(group.values, self.default_threshold)
+                thresholds[0][cls] = KNNClassifier.get_threshold(group.values, self.default_threshold, batch_size=1024)
             else:
                 thresholds[0][cls] = np.min([threshold_class, self.default_threshold])
+        print("----->End calculate threshold for each class<-----", time.time() - st)
         # print(thresholds)
         return thresholds
 
     @staticmethod
-    def get_threshold(embeddings, default_threshold=0.5, batch_size=1024, is_max=True):
+    def get_threshold(embeddings, default_threshold=0.5, batch_size=32, is_max=True):
         A = embeddings
         B = embeddings
         nof_emb = embeddings.shape[0]
         nof_batch = int(math.ceil(1.0 * nof_emb / batch_size))
-        result = np.zeros((nof_emb, nof_emb))
+        result = np.zeros((nof_batch,))
         with tf.Session() as sess:
+            b_tf = tf.placeholder(shape=[None, 512], dtype=tf.float32)
+            A_tf = tf.constant(A, dtype=tf.float32)
+            distance_tf = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(A_tf, tf.expand_dims(b_tf, 1))), axis=2))
             for i in range(nof_batch):
                 # start = time.time()
-                # print(i)
+                if i % 10 == 0:
+                    sys.stdout.write("\r  --->progress<---- {}/{}".format(i, nof_batch))
                 start_index = i * batch_size
                 end_index = min((i + 1) * batch_size, nof_emb)
                 b = B[start_index:end_index, :]
-                distance_tf = tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(A, tf.expand_dims(b, 1))), axis=2))
-                distances = sess.run(distance_tf)
-                result[start_index:end_index, :] = distances
+                distances = sess.run(distance_tf, feed_dict={b_tf: b})
+                distances = distances[distances != 0]
+                if is_max:
+                    result[i] = np.max(distances, axis=0)
+                else:
+                    result[i] = np.min(distances, axis=0)
                 # print("time:", time.time() - start)
 
             # result1 = sess.run(tf.sqrt(tf.reduce_sum(tf.square(tf.subtract(A, tf.expand_dims(B, 1))), axis=2)))
             # print(result == result1)
 
-            result = result[result != 0]
             if is_max:
                 result = np.max(result, axis=0)
             else:
                 result = np.min(result, axis=0)
+
             result = np.min(np.array([result, default_threshold]))
             return result
