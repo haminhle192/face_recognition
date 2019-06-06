@@ -30,12 +30,12 @@ try:
                 if self.event.wait(1):
                     try:
                         with connection_lock:
-                            connection.write(struct.pack('<L', self.stream.tell()))
-                            connection.flush()
-                            self.stream.seek(0)
                             img = self.stream.read()
                             faces = self.detection.find_faces(img)
                             print(faces)
+                            connection.write(struct.pack('<L', self.stream.tell()))
+                            connection.flush()
+                            self.stream.seek(0)
                             connection.write(img)
                     finally:
                         self.stream.seek(0)
