@@ -51,7 +51,8 @@ class KNNClassifier:
 
                 # Train classifier
                 print('Training classifier')
-                model = kNN.kNN(emb_array, labels, thresholds, self.n_neighbors)
+                # model = kNN.kNN(emb_array, labels, thresholds, self.n_neighbors)
+                model = kNNTF.kNN(emb_array, labels, thresholds, sess, k=1)
 
                 # Create a list of class names
                 class_names = [cls.name.replace('_', ' ') for cls in data_set]
@@ -136,7 +137,7 @@ class KNNClassifier:
                 # print(start_index, end_index)
                 data = test_data[start_index:end_index, :]
                 # print(data.shape)
-                pred = model.fit(data)
+                pred = model.predict(data)
                 # print(pred.shape)
                 predictions[start_index:end_index, :] = pred
                 # sys.stdout.write("\r --->time by batch<---- {} {}".format(i, time.time()-start))

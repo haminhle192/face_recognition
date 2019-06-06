@@ -52,7 +52,7 @@ class kNN:
 
         return x_train, y_train, x_test, prediction
 
-    def fit(self, data_test_X):
+    def predict(self, data_test_X):
         prediction = self.sess.run(self.prediction, feed_dict={self.x_train: self.data_train_X,
                                                           self.x_test: data_test_X,
                                                           self.y_train: self.data_train_Y})
