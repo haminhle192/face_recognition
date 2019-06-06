@@ -4,6 +4,7 @@ import struct
 import time
 import threading
 import picamera
+import numpy as np
 import src.detection as detection
 
 client_socket = socket.socket()
@@ -32,8 +33,8 @@ try:
                     try:
                         with connection_lock:
                             img = self.stream.read()
-                            faces = self.detection.find_faces(img)
-                            print(faces)
+                            faces = self.detection.find_faces(np.zeros(shape=(160,160,3)))
+                            # print(faces)
                             connection.write(struct.pack('<L', self.stream.tell()))
                             connection.flush()
                             self.stream.seek(0)
