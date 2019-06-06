@@ -15,10 +15,11 @@ try:
     pool_lock = threading.Lock()
 
     class ImageStreamer(threading.Thread):
-        def __init__(self):
+        def __init__(self,
+                     detection):
             super(ImageStreamer, self).__init__()
             print("Starting Image Streamer")
-            self.detection = detection.Detection()
+            self.detection = detection
             self.stream = io.BytesIO()
             self.event = threading.Event()
             self.terminated = False
@@ -61,7 +62,8 @@ try:
             finish = time.time()
 
     with picamera.PiCamera() as camera:
-        pool = [ImageStreamer() for i in range(2)]
+        detection = detection.Detection()
+        pool = [ImageStreamer(detection) for i in range(2)]
         camera.resolution = (160, 160)
         # Set the framerate appropriately; too fast and we'll starve the
         # pool of streamers and crash the script

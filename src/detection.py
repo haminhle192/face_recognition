@@ -153,7 +153,7 @@ class Detection:
 
     def find_faces(self, image):
         start = time.time()
-        image = image[:, :, 0:3]
+        # image = image[:, :, 0:3]
 
         faces = []
 
