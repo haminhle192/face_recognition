@@ -59,18 +59,15 @@ class kNN:
         return prediction
 
     @staticmethod
-    def evaluate(data_train_Y, data_test_Y, prediction, batch_size=64):
+    def evaluate(data_train_Y, data_test_Y, prediction, batch_size=32):
         mlb = MultiLabelBinarizer()
         mlb.fit([set(data_train_Y)])
         test_labels_onehot = mlb.transform(list(zip(data_test_Y)))
-        # print(prediction)
-        # print(test_labels_onehot)
-        accuracy = np.mean(np.equal(prediction, test_labels_onehot))
-        print('Accuracy: %.3f' % accuracy)
 
         nof_data = prediction.shape[0]
         nof_batch = int(math.ceil(1.0 * nof_data / batch_size))
         len_fp = 0
+        len_tp = 0
         print(prediction.shape)
         for i in range(nof_batch):
             sys.stdout.write("\r  --->progress<---- {}/{}".format(i, nof_batch))
@@ -78,12 +75,13 @@ class kNN:
             end_index = min((i + 1) * batch_size, nof_data)
             labels = test_labels_onehot[start_index:end_index, :]
             pre = prediction[start_index: end_index, :]
-            fp = (pre - labels) * pre
-            fp = np.sum(fp, axis=1)
-            fp = fp[fp != 0]
-            len_fp += len(fp)
-        # fp = (((predictions - test_labels)!=0)*predictions)
-        # fp = fp[fp != 0]
-        # fp = fp[fp != np.max(test_labels)+1]
-        # print(fp)
+            pre = pre.astype(int)
+
+            tp = np.sum(pre - labels, axis=1).astype(int)
+            len_tp += len(tp[tp == 0])
+
+            fp = tp * np.sum(pre, axis=1).astype(int)
+            len_fp += len(fp[fp != 0])
+
+        print('Accuracy: %.3f' % (len_tp/nof_data))
         print('False Positive: %.3f' % (len_fp/nof_data))
