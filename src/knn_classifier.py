@@ -46,7 +46,7 @@ class KNNClassifier:
             with tf.Session() as sess:
                 data_set, image_path, labels = self.load_train_data()
                 emb_array = encoder.Encoder(sess=sess).generate_embeddings(image_path)
-                thresholds = self.cal_thresholds(emb_array, labels)
+                thresholds = self.cal_thresholds(emb_array, labels, sess)
                 classifier_filename_exp = os.path.expanduser(os.path.join(self.saved_classifier_dir, self.classifier_filename))
 
                 # Train classifier
@@ -149,7 +149,8 @@ class KNNClassifier:
         print("------------->End Evaluating<-------------")
         print("============End Test performance===============", time.time() - st)
 
-    def cal_thresholds(self, embeddings, labels):
+    def cal_thresholds(self, embeddings, labels, sess):
+        self.distance_model = distance.Distance(sess)
         df = pd.DataFrame(embeddings)
         df[512] = labels
         max_label = np.max(labels)
