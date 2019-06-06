@@ -31,7 +31,7 @@ from six import string_types, iteritems
 import numpy as np
 import tensorflow as tf
 #from math import floor
-import cv2
+# import cv2
 import os
 
 def layer(op):
@@ -763,8 +763,8 @@ def rerec(bboxA):
     return bboxA
 
 def imresample(img, sz):
-    im_data = cv2.resize(img, (sz[1], sz[0]), interpolation=cv2.INTER_AREA) #@UndefinedVariable
-    return im_data
+    # im_data = cv2.resize(img, (sz[1], sz[0]), interpolation=cv2.INTER_AREA) #@UndefinedVariable
+    return img
 
     # This method is kept for debugging purpose
 #     h=img.shape[0]

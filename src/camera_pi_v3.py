@@ -62,7 +62,7 @@ try:
 
     with picamera.PiCamera() as camera:
         pool = [ImageStreamer() for i in range(2)]
-        camera.resolution = (480, 320)
+        camera.resolution = (160, 160)
         # Set the framerate appropriately; too fast and we'll starve the
         # pool of streamers and crash the script
         #camera.framerate = 48

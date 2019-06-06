@@ -10,6 +10,7 @@ import src.align.detect_face as detect_face
 import random
 from time import sleep
 import shutil
+import time
 
 
 class Face:
@@ -151,6 +152,7 @@ class Detection:
     #     return faces, count_per_image, nrof_samples
 
     def find_faces(self, image):
+        start = time.time()
         image = image[:, :, 0:3]
 
         faces = []
@@ -172,6 +174,8 @@ class Detection:
             # face.image = misc.imresize(cropped, (self.face_crop_size, self.face_crop_size), interp='bilinear')
 
             faces.append(face)
+
+        print(time.time() - start)
 
         return faces
 
