@@ -764,7 +764,7 @@ def rerec(bboxA):
 
 def imresample(img, sz):
     # im_data = cv2.resize(img, (sz[1], sz[0]), interpolation=cv2.INTER_AREA) #@UndefinedVariable
-    img_data = np.zeros(shape=(sz[0], sz[1], img.shape[2]))
+    img_data = np.random.rand(sz[0], sz[1], img.shape[2])
     return img_data
 
     # This method is kept for debugging purpose

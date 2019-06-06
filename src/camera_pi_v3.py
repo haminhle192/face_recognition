@@ -32,13 +32,11 @@ try:
                 if self.event.wait(1):
                     try:
                         with connection_lock:
-                            img = self.stream.read()
-                            faces = self.detection.find_faces(np.zeros(shape=(160,160,3)))
-                            # print(faces)
+                            faces = self.detection.find_faces(np.random.rand(160,160,3))
                             connection.write(struct.pack('<L', self.stream.tell()))
                             connection.flush()
                             self.stream.seek(0)
-                            connection.write(img)
+                            connection.write(self.stream.read())
                     finally:
                         self.stream.seek(0)
                         self.stream.truncate()
