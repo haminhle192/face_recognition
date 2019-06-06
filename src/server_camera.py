@@ -1,6 +1,9 @@
 import io
 import socket
 import struct
+import cv2
+import numpy as np
+from PIL import Image
 
 server_socket = socket.socket()
 server_socket.bind(('0.0.0.0', 8000))
@@ -17,8 +20,13 @@ try:
         image_stream = io.BytesIO()
         image_stream.write(connection.read(image_len))
         image_stream.seek(0)
-        frame +=1
+        image = Image.open(image_stream).convert('RGB')
+        open_cv_image = np.array(image)
+        open_cv_image = open_cv_image[:, :, ::-1].copy()
+        print(open_cv_image.shape)
+        cv2.imshow('Network Image',open_cv_image)
+        cv2.waitKey(1)
+        image.verify()
 finally:
     connection.close()
     server_socket.close()
-    print(frame)
