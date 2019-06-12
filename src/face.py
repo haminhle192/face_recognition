@@ -53,4 +53,4 @@ class Face:
 
     def predict1(self, image):
         faces = self.recognition.identify(image)
-        return faces
+        return (f.name for f in faces)

@@ -23,7 +23,6 @@ try:
         image = Image.open(image_stream).convert('RGB')
         open_cv_image = np.array(image)
         open_cv_image = open_cv_image[:, :, ::-1].copy()
-        print(open_cv_image.shape)
         cv2.imshow('Network Image',open_cv_image)
         cv2.waitKey(1)
         image.verify()
