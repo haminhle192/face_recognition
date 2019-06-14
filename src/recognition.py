@@ -11,7 +11,7 @@ import numpy as np
 import src.encoder1 as encoder
 import src.detection as detection
 import time
-
+from scipy import misc
 import tensorflow as tf
 
 
@@ -28,13 +28,15 @@ class Recognition:
 
     def identify(self, image):
         # st = time.time()
-        faces = self.detection.find_faces(image)
+        # faces = self.detection.find_faces(image)
         # print("dectect time: %s" % str(time.time() - st))
+        # resized_image = misc.imresize(image, (160, 160), interp='bilinear')
+        face = detection.Face()
+        face.image = image
+        faces = [face]
         predicted_faces = []
 
         for i, face in enumerate(faces):
-            if self.debug:
-                cv2.imshow("Face: " + str(i), face.image)
             predicted_faces.append(self.identifier.identify(face))
 
         return predicted_faces
