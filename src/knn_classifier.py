@@ -52,7 +52,7 @@ class KNNClassifier:
                 # Train classifier
                 print('Training classifier')
                 # model = kNN.kNN(emb_array, labels, thresholds, self.n_neighbors)
-                model = kNNTF.kNN(emb_array, labels, thresholds, sess, k=1)
+                # model = kNNTF.kNN(emb_array, labels, thresholds, sess, k=1)
 
                 # Create a list of class names
                 class_names = [cls.name.replace('_', ' ') for cls in data_set]
@@ -60,7 +60,8 @@ class KNNClassifier:
 
                 # Saving classifier model
                 with open(classifier_filename_exp, 'wb') as outfile:
-                    pickle.dump((model, class_names), outfile)
+                    # pickle.dump((model, class_names), outfile)
+                    pickle.dump((emb_array, labels, thresholds, class_names), outfile)
                 print('Saved classifier model to file "%s"' % classifier_filename_exp)
 
     def split_data(self, data_file, label_file, out1_file, out2_file):
@@ -121,7 +122,7 @@ class KNNClassifier:
             st = time.time()
             print("============Test performance===============")
             # model = kNN.kNN(train_data, train_labels, thresholds, self.n_neighbors)
-            model = kNNTF.kNN(train_data, train_labels, thresholds, sess, k=1)
+            model = kNNTF.kNN(train_data, train_labels, thresholds, k=1)
 
             nof_test_data = test_data.shape[0]
             print("--->nof test data<----", nof_test_data)
@@ -137,7 +138,7 @@ class KNNClassifier:
                 # print(start_index, end_index)
                 data = test_data[start_index:end_index, :]
                 # print(data.shape)
-                pred = model.predict(data)
+                pred = model.predict(sess, data)
                 # print(pred.shape)
                 predictions[start_index:end_index, :] = pred
                 # sys.stdout.write("\r --->time by batch<---- {} {}".format(i, time.time()-start))

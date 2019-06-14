@@ -47,7 +47,7 @@ class Encoder:
             emb_array[start_index:end_index, :] = self.sess.run(embeddings, feed_dict=feed_dict)
         return emb_array
 
-    def generate_embedding(self, face):
+    def generate_embedding(self, sess, face):
         # Get input and output tensors
         images_placeholder = self.sess.graph.get_tensor_by_name("input:0")
         embeddings = self.sess.graph.get_tensor_by_name("embeddings:0")
@@ -58,7 +58,8 @@ class Encoder:
         # Run forward pass to calculate embeddings
         feed_dict = {images_placeholder: [prewhiten_face], phase_train_placeholder: False}
         # st = time.time()
-        result = self.sess.run(embeddings, feed_dict=feed_dict)[0]
+        # result = self.sess.run(embeddings, feed_dict=feed_dict)[0]
+        result = sess.run(embeddings, feed_dict=feed_dict)[0]
         # print("emb time: %s" % str(time.time() - st))
         return result
 

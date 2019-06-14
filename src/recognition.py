@@ -10,8 +10,8 @@ import numpy as np
 
 import src.encoder1 as encoder
 import src.detection as detection
+import src.knn_tf as kNNTF
 import time
-
 import tensorflow as tf
 
 
@@ -46,22 +46,24 @@ class Identifier:
         print("Loading classifier ...")
         if os.path.exists(classifier_filename):
             with open(classifier_filename, 'rb') as infile:
-                self.model, self.class_names = pickle.load(infile)
+                emb_array, labels, thresholds, self.class_names = pickle.load(infile)
+                self.model = kNNTF.kNN(emb_array, labels, thresholds, k=1)
             print('Loaded classifier model from file "%s"\n' % classifier_filename)
         else:
             print("Don't have classifier! %s" % classifier_filename)
 
     def identify(self, face):
-        # st = time.time()
-        face.embedding = self.encoder.generate_embedding(face)
-        # print("embedding time: %s" % str(time.time() - st))
-        # st = time.time()
-        if face.embedding is not None:
-            prediction = self.model.predict(np.array([face.embedding]))[0]
-            face.name = self.class_names[prediction]
-            # print("recognition time: %s" % str(time.time() - st))
-            return face
+        with tf.Session() as sess:
+            # st = time.time()
+            face.embedding = self.encoder.generate_embedding(sess, face)
+            # print("embedding time: %s" % str(time.time() - st))
+            # st = time.time()
+            if face.embedding is not None:
+                prediction = self.model.predict(sess, np.array([face.embedding]))[0]
+                face.name = self.class_names[prediction[0]]
+                # print("recognition time: %s" % str(time.time() - st))
+                return face
 
-        else:
-            print("Don't have embedding.")
-            return "Error"
+            else:
+                print("Don't have embedding.")
+                return "Error"

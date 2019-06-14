@@ -9,14 +9,12 @@ class kNN:
                  data_train_X,
                  data_train_Y,
                  thresholds,
-                 sess,
                  k=1):
         self.data_train_X = data_train_X
         self.data_train_Y = data_train_Y
         self.k = k
         self.thresholds = thresholds
         self.nof_class = np.max(data_train_Y) + 1
-        self.sess = sess
 
         self.x_train, self.y_train, self.x_test, self.prediction = self._build()
 
@@ -52,8 +50,8 @@ class kNN:
 
         return x_train, y_train, x_test, prediction
 
-    def predict(self, data_test_X):
-        prediction = self.sess.run(self.prediction, feed_dict={self.x_train: self.data_train_X,
+    def predict(self, sess, data_test_X):
+        prediction = sess.run(self.prediction, feed_dict={self.x_train: self.data_train_X,
                                                           self.x_test: data_test_X,
                                                           self.y_train: self.data_train_Y})
         return prediction
