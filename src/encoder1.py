@@ -13,24 +13,27 @@ import time
 class Encoder:
     def __init__(
             self,
-            sess=tf.Session(),
             pre_trained_model=os.path.dirname(__file__) + "/../pre_trained_models/CASIA.pb",
             batch_size=32,
             image_size=160
     ):
-        self.sess = sess
+        self.graph = tf.Graph()
+        self.sess = tf.Session(graph=self.graph)
         self.pre_trained_model = pre_trained_model
         self.batch_size = batch_size
         self.image_size = image_size
         print("Loading pre trained model ...")
-        with self.sess.as_default():
+        with self.graph.as_default():
             facenet.load_model(self.pre_trained_model)
+
+    def __del__(self):
+        self.sess.close()
 
     def generate_embeddings(self, image_paths):
         # Get input and output tensors
-        images_placeholder = tf.get_default_graph().get_tensor_by_name("input:0")
-        embeddings = tf.get_default_graph().get_tensor_by_name("embeddings:0")
-        phase_train_placeholder = tf.get_default_graph().get_tensor_by_name("phase_train:0")
+        images_placeholder = self.sess.graph.get_tensor_by_name("input:0")
+        embeddings = self.sess.graph.get_tensor_by_name("embeddings:0")
+        phase_train_placeholder = self.sess.graph.get_tensor_by_name("phase_train:0")
         embedding_size = embeddings.get_shape()[1]
 
         # print('Calculating embeddings ...')
@@ -47,7 +50,7 @@ class Encoder:
             emb_array[start_index:end_index, :] = self.sess.run(embeddings, feed_dict=feed_dict)
         return emb_array
 
-    def generate_embedding(self, sess, face):
+    def generate_embedding(self, face):
         # Get input and output tensors
         images_placeholder = self.sess.graph.get_tensor_by_name("input:0")
         embeddings = self.sess.graph.get_tensor_by_name("embeddings:0")
@@ -59,7 +62,7 @@ class Encoder:
         feed_dict = {images_placeholder: [prewhiten_face], phase_train_placeholder: False}
         # st = time.time()
         # result = self.sess.run(embeddings, feed_dict=feed_dict)[0]
-        result = sess.run(embeddings, feed_dict=feed_dict)[0]
+        result = self.sess.run(embeddings, feed_dict=feed_dict)[0]
         # print("emb time: %s" % str(time.time() - st))
         return result
 

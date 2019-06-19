@@ -30,6 +30,7 @@ class KNNClassifier:
         self.saved_classifier_dir = saved_classifier_dir
         self.classifier_filename = classifier_filename
         self.default_threshold = default_threshold
+        self.distance_model = distance.Distance()
 
     def load_train_data(self):
         data_set = facenet.get_dataset(self.data_dir)
@@ -42,27 +43,26 @@ class KNNClassifier:
         return data_set, paths, labels
 
     def classifier(self):
-        with tf.Graph().as_default():
-            with tf.Session() as sess:
-                data_set, image_path, labels = self.load_train_data()
-                emb_array = encoder.Encoder(sess=sess).generate_embeddings(image_path)
-                thresholds = self.cal_thresholds(emb_array, labels, sess)
-                classifier_filename_exp = os.path.expanduser(os.path.join(self.saved_classifier_dir, self.classifier_filename))
+        data_set, image_path, labels = self.load_train_data()
+        encoder_model = encoder.Encoder()
+        emb_array = encoder_model.generate_embeddings(image_path)
+        thresholds = self.cal_thresholds(emb_array, labels)
+        classifier_filename_exp = os.path.expanduser(os.path.join(self.saved_classifier_dir, self.classifier_filename))
 
-                # Train classifier
-                print('Training classifier')
-                # model = kNN.kNN(emb_array, labels, thresholds, self.n_neighbors)
-                # model = kNNTF.kNN(emb_array, labels, thresholds, sess, k=1)
+        # Train classifier
+        print('Training classifier')
+        # model = kNN.kNN(emb_array, labels, thresholds, self.n_neighbors)
+        # model = kNNTF.kNN(emb_array, labels, thresholds, sess, k=1)
 
-                # Create a list of class names
-                class_names = [cls.name.replace('_', ' ') for cls in data_set]
-                class_names.append("-1")
+        # Create a list of class names
+        class_names = [cls.name.replace('_', ' ') for cls in data_set]
+        class_names.append("-1")
 
-                # Saving classifier model
-                with open(classifier_filename_exp, 'wb') as outfile:
-                    # pickle.dump((model, class_names), outfile)
-                    pickle.dump((emb_array, labels, thresholds, class_names), outfile)
-                print('Saved classifier model to file "%s"' % classifier_filename_exp)
+        # Saving classifier model
+        with open(classifier_filename_exp, 'wb') as outfile:
+            # pickle.dump((model, class_names), outfile)
+            pickle.dump((emb_array, labels, thresholds, class_names), outfile)
+        print('Saved classifier model to file "%s"' % classifier_filename_exp)
 
     def split_data(self, data_file, label_file, out1_file, out2_file):
         df = pd.DataFrame(np.load(data_file))
@@ -109,39 +109,37 @@ class KNNClassifier:
         test_labels = np.ndarray.tolist((test_df.values[:, -1]).astype(int))
         print("============End Loading data===============", time.time() - st)
         st = time.time()
-        with tf.Session() as sess:
-            self.distance_model = distance.Distance(sess)
 
-            print("============Calculate thresholds===============")
-            thresholds = self.cal_thresholds(train_data, train_labels)
-            # np.save("E:\Data\CASIA_thresholds.npy", thresholds)
-            # thresholds = np.load("E:\Data\CASIA_thresholds.npy")
-            # thresholds = np.zeros_like(thresholds) + 0.7
-            # print(thresholds)
-            print("============End Calculate thresholds===============", time.time() - st)
-            st = time.time()
-            print("============Test performance===============")
-            # model = kNN.kNN(train_data, train_labels, thresholds, self.n_neighbors)
-            model = kNNTF.kNN(train_data, train_labels, thresholds, k=1)
+        print("============Calculate thresholds===============")
+        thresholds = self.cal_thresholds(train_data, train_labels)
+        # np.save("E:\Data\CASIA_thresholds.npy", thresholds)
+        # thresholds = np.load("E:\Data\CASIA_thresholds.npy")
+        # thresholds = np.zeros_like(thresholds) + 0.7
+        # print(thresholds)
+        print("============End Calculate thresholds===============", time.time() - st)
+        st = time.time()
+        print("============Test performance===============")
+        # model = kNN.kNN(train_data, train_labels, thresholds, self.n_neighbors)
+        model = kNNTF.kNN(train_data, train_labels, thresholds, k=1)
 
-            nof_test_data = test_data.shape[0]
-            print("--->nof test data<----", nof_test_data)
-            nof_batch = int(math.ceil(1.0*nof_test_data / batch_size))
-            predictions = np.zeros((nof_test_data, np.max(train_labels) + 1))
-            # print(predictions.shape)
+        nof_test_data = test_data.shape[0]
+        print("--->nof test data<----", nof_test_data)
+        nof_batch = int(math.ceil(1.0*nof_test_data / batch_size))
+        predictions = np.zeros((nof_test_data, np.max(train_labels) + 1))
+        # print(predictions.shape)
 
-            for i in range(nof_batch):
-                # start = time.time()
-                sys.stdout.write("\r --->progress<---- {}/{}".format(i, nof_batch))
-                start_index = i * batch_size
-                end_index = min((i + 1) * batch_size, nof_test_data)
-                # print(start_index, end_index)
-                data = test_data[start_index:end_index, :]
-                # print(data.shape)
-                pred = model.predict(sess, data)
-                # print(pred.shape)
-                predictions[start_index:end_index, :] = pred
-                # sys.stdout.write("\r --->time by batch<---- {} {}".format(i, time.time()-start))
+        for i in range(nof_batch):
+            # start = time.time()
+            sys.stdout.write("\r --->progress<---- {}/{}".format(i, nof_batch))
+            start_index = i * batch_size
+            end_index = min((i + 1) * batch_size, nof_test_data)
+            # print(start_index, end_index)
+            data = test_data[start_index:end_index, :]
+            # print(data.shape)
+            pred = model.predict(data)
+            # print(pred.shape)
+            predictions[start_index:end_index, :] = pred
+            # sys.stdout.write("\r --->time by batch<---- {} {}".format(i, time.time()-start))
 
         # np.save("E:\Data\CASIA_predictions.npy", predictions)
         # predictions = np.load("E:\Data\CASIA_predictions.npy")
@@ -150,8 +148,7 @@ class KNNClassifier:
         print("------------->End Evaluating<-------------")
         print("============End Test performance===============", time.time() - st)
 
-    def cal_thresholds(self, embeddings, labels, sess):
-        self.distance_model = distance.Distance(sess)
+    def cal_thresholds(self, embeddings, labels):
         df = pd.DataFrame(embeddings)
         df[512] = labels
         max_label = np.max(labels)
