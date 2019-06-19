@@ -201,7 +201,7 @@ class KNNClassifier:
         else:
             result = np.min(result, axis=0)
 
-        np.save(save_to, result)
+        # np.save(save_to, result) // Only for testing
         # result = np.load(save_to)
         result = np.min(np.array([result, default_threshold]).flatten())
         return result
