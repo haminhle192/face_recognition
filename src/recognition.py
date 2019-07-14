@@ -45,8 +45,9 @@ class Identifier:
         print("Loading classifier ...")
         if os.path.exists(classifier_filename):
             with open(classifier_filename, 'rb') as infile:
-                emb_array, labels, thresholds, self.class_names = pickle.load(infile)
-                self.model = kNNTF.kNN(emb_array, labels, thresholds, k=1)
+                # emb_array, labels, thresholds, self.class_names = pickle.load(infile)
+                # self.model = kNNTF.kNN(emb_array, labels, thresholds, k=1)
+                self.model, self.class_names = pickle.load(infile)
             print('Loaded classifier model from file "%s"\n' % classifier_filename)
         else:
             print("Don't have classifier! %s" % classifier_filename)
@@ -58,7 +59,7 @@ class Identifier:
         # st = time.time()
         if face.embedding is not None:
             prediction = self.model.predict(np.array([face.embedding]))[0]
-            face.name = self.class_names[prediction[0]]
+            face.name = self.class_names[prediction]
             # print("recognition time: %s" % str(time.time() - st))
             return face
 

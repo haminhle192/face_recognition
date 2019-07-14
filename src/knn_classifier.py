@@ -51,7 +51,7 @@ class KNNClassifier:
 
         # Train classifier
         print('Training classifier')
-        # model = kNN.kNN(emb_array, labels, thresholds, self.n_neighbors)
+        model = kNN.kNN(emb_array, labels, thresholds, self.n_neighbors)
         # model = kNNTF.kNN(emb_array, labels, thresholds, sess, k=1)
 
         # Create a list of class names
@@ -60,8 +60,8 @@ class KNNClassifier:
 
         # Saving classifier model
         with open(classifier_filename_exp, 'wb') as outfile:
-            # pickle.dump((model, class_names), outfile)
-            pickle.dump((emb_array, labels, thresholds, class_names), outfile)
+            pickle.dump((model, class_names), outfile)
+            # pickle.dump((emb_array, labels, thresholds, class_names), outfile)
         print('Saved classifier model to file "%s"' % classifier_filename_exp)
 
     def split_data(self, data_file, label_file, out1_file, out2_file):
