@@ -345,6 +345,8 @@ def get_dataset(path, has_class_directories=True):
     classes.sort()
     nrof_classes = len(classes)
     for i in range(nrof_classes):
+        if classes[i] == '__pycache__':
+            continue
         class_name = classes[i]
         facedir = os.path.join(path_exp, class_name)
         image_paths = get_image_paths(facedir)
