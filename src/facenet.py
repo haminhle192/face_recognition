@@ -261,6 +261,9 @@ def load_data(image_paths, do_random_crop, do_random_flip, image_size, do_prewhi
         img = misc.imread(image_paths[i])
         if img.ndim == 2:
             img = to_rgb(img)
+        if img.ndim > 3:
+            img = to_rgb2(img)
+        img = img[:, :, 0:3]
         if do_prewhiten:
             img = prewhiten(img)
         # if img.shape[1] < image_size:
