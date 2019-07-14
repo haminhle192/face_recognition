@@ -9,7 +9,8 @@ from scipy import misc
 import src.detection as detection
 import src.knn_classifier as classifier
 import src.recognition as recognition
-
+from PIL import Image
+import numpy as np
 
 class Face:
 
@@ -41,7 +42,8 @@ class Face:
     def predict(self, image_path):
         print("Starting predict ...")
         if os.path.exists(image_path):
-            image = misc.imread(image_path)
+            # image = misc.imread(image_path)
+            image = np.array(Image.open(image_path)).astype(float)
             faces = self.recognition.identify(image)
             print('number of faces:', len(faces))
             for f in faces:
