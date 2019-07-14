@@ -1,4 +1,5 @@
 import numpy as np
+import sys
 
 
 class kNN:
@@ -37,20 +38,23 @@ class kNN:
 
         # label_weight = np.zeros(max_data_y + 2)
         label_weight = np.zeros(max_data_y + 1)
-
         for index in k_neighbors_index:
-            if distances[index] <= self.thresholds[self.data_Y[index]]:
+            if distances[index] <= self.thresholds[0, self.data_Y[index]]:
                 label_weight[int(self.data_Y[index])] += self.weight(distances[index])
 
+        # print(label_weight)
         if np.count_nonzero(label_weight) > 0:
-            return np.argmax(np.nonzero(label_weight))
+            return np.argmax(label_weight)
         else:
             return max_data_y + 1
 
     # target is set of data point: (#data x #feature) matrix
     def predict(self, target):
         labels = []
+        n_data = target.shape[0]
         for i in range(target.shape[0]):
+            # sys.stdout.write('\r Data #{}%'.format(i / n_data * 100))
             labels.append(self.get_label(target[i]))
 
         return np.array(labels)
+
