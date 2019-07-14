@@ -65,8 +65,8 @@ class KNNClassifier:
         print('Saved classifier model to file "%s"' % classifier_filename_exp)
 
     def split_data(self, data_file, label_file, out1_file, out2_file):
-        df = pd.DataFrame(np.load(data_file))
-        df[512] = np.load(label_file)
+        df = pd.DataFrame(np.load(data_file, allow_pickle=True))
+        df[512] = np.load(label_file, allow_pickle=True)
         df = df.sort_values(by=[512]).groupby([512])
         train_df = pd.DataFrame(np.zeros((0, 513)))
         test_df = pd.DataFrame(np.zeros((0, 513)))
