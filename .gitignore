@@ -107,7 +107,6 @@ venv.bak/
 .idea/
 saved_classifiers/
 data/prediction
-data/training_aligned
 saved_classifiers/
 
 .DS_store
