@@ -178,8 +178,8 @@ def move_file(source_folder, destination_folder):
 
 if __name__ == '__main__':
     start_time = time.time()
-    global f
-    predictor = face.Face()
+    # global f
+    # predictor = face.Face()
     print("Time to load model: %s" % str(time.time() - start_time))
     # path = ROOT_PATH
     with open('config.json') as json_data_file:
