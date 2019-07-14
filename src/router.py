@@ -47,9 +47,9 @@ def train():
 def predict():
     file_predict = request.files[IMAGE_PREDICT]
     mime_type = file_predict.content_type
-    if mime_type not in ['image/png', 'image/jpg']:
-        response = generate_response(1001, 'Image have to png or jpg format')
-        return response
+    # if mime_type not in ['image/png', 'image/jpg', 'image/jpeg']:
+    #     response = generate_response(1001, 'Image have to png or jpg format')
+    #     return response
 
     file_name = generate_name(secure_filename(file_predict.filename))
     file_predict_path = os.path.join(PREDICTION_DATA_PATH, file_name)
@@ -136,9 +136,9 @@ def align_face(face_id):
     for key in request.files.keys():
         file_request = request.files[key]
         mime_type = file_request.content_type
-        if mime_type not in ['image/png', 'image/jpg']:
-            print(mime_type)
-            continue
+        # if mime_type not in ['image/png', 'image/jpg']:
+        #     print(mime_type)
+        #     continue
         found_file = True
         file_name = generate_name(secure_filename(file_request.filename))
         file_path = os.path.join(tmp_input_face_path, file_name)
@@ -178,8 +178,8 @@ def move_file(source_folder, destination_folder):
 
 if __name__ == '__main__':
     start_time = time.time()
-    # global f
-    # predictor = face.Face()
+    global predictor
+    predictor = face.Face()
     print("Time to load model: %s" % str(time.time() - start_time))
     # path = ROOT_PATH
     with open('config.json') as json_data_file:
