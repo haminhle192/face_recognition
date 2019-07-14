@@ -105,9 +105,7 @@ venv.bak/
 .mypy_cache/
 
 .idea/
-saved_classifiers/
 data/prediction
-saved_classifiers/
 
 .DS_store
 /.DS_store
